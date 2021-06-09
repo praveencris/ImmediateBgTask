@@ -1,18 +1,18 @@
 package com.example.jsonsample;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-
-import java.util.Calendar;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -20,8 +20,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button startServiceButton;
     private Button stopServiceButton;
 
-    private AlarmManager alarmMgr;
-    private PendingIntent alarmIntent;
+    private final Handler handler = new Handler(Looper.myLooper());
+    private Runnable runnable;
+    private final long delayInMillis = 20000;
+    private AlarmReceiver alarmReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,28 +37,46 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         startServiceButton.setOnClickListener(this);
         stopServiceButton.setOnClickListener(this);
 
-        alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(this, AlarmReceiver.class);
-        alarmIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+        alarmReceiver = new AlarmReceiver();
+        LocalBroadcastManager.getInstance(MainActivity.this)
+                .registerReceiver(alarmReceiver,
+                        new IntentFilter("action.CALL_SERVICE"));
     }
-
 
     @Override
     public void onClick(View v) {
         // Instantiate the RequestQueue.
         if (v.getId() == R.id.startButton) {
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(System.currentTimeMillis());
-         /*   calendar.set(Calendar.HOUR_OF_DAY, 8);
-            calendar.set(Calendar.MINUTE, 30);*/
-            alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP,
-                    calendar.getTimeInMillis(), 20 * 1000, alarmIntent);
+            handler.postDelayed(runnable = new Runnable() {
+                @Override
+                public void run() {
+                    //Log.d("TAG", "Run after 5 seconds");
+                    //Toast.makeText(MainActivity.this, "Run after 20 seconds", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent();
+                    intent.setAction("action.CALL_SERVICE");
+                    LocalBroadcastManager.getInstance(MainActivity.this)
+                            .sendBroadcast(intent);
+                    handler.postDelayed(runnable, delayInMillis);
+                }
+            }, delayInMillis);
+
         } else {
-            // If the alarm has been set, cancel it.
-            if (alarmMgr != null) {
-                alarmMgr.cancel(alarmIntent);
-                Log.d("TAG","Alarm Cancelled!!");
-            }
+            if (runnable != null)
+                handler.removeCallbacks(runnable);
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (runnable != null)
+            handler.removeCallbacks(runnable);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        LocalBroadcastManager.getInstance(MainActivity.this)
+                .unregisterReceiver(alarmReceiver);
     }
 }
