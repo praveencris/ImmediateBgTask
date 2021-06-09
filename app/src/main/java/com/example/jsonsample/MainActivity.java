@@ -5,14 +5,18 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.os.HandlerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -20,8 +24,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button startServiceButton;
     private Button stopServiceButton;
 
-    private final Handler handler = new Handler(Looper.myLooper());
-    private Runnable runnable;
+    ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    Handler mainThreadHandler = HandlerCompat.createAsync(Looper.getMainLooper());
+
     private final long delayInMillis = 20000;
     private AlarmReceiver alarmReceiver;
 
@@ -42,24 +47,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View v) {
-        // Instantiate the RequestQueue.
         if (v.getId() == R.id.startButton) {
-            registerForBackgroundCall();
-            handler.postDelayed(runnable = new Runnable() {
+            executor.scheduleWithFixedDelay(new Runnable() {
                 @Override
                 public void run() {
-                    //Log.d("TAG", "Run after 5 seconds");
-                    //Toast.makeText(MainActivity.this, "Run after 20 seconds", Toast.LENGTH_SHORT).show();
                     registerForBackgroundCall();
-                    handler.postDelayed(runnable, delayInMillis);
+                    //Optional if want to display something on main thread
+                    mainThreadHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "Timer triggered!!", Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 }
-            }, delayInMillis);
-
+            }, 0, delayInMillis, TimeUnit.MILLISECONDS);
         } else {
-            if (runnable != null)
-                handler.removeCallbacks(runnable);
-            LocalBroadcastManager.getInstance(MainActivity.this)
-                    .unregisterReceiver(alarmReceiver);
+            executor.shutdown();
         }
     }
 
@@ -73,8 +76,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onPause() {
         super.onPause();
-        if (runnable != null)
-            handler.removeCallbacks(runnable);
         LocalBroadcastManager.getInstance(MainActivity.this)
                 .unregisterReceiver(alarmReceiver);
     }
