@@ -47,15 +47,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         // Instantiate the RequestQueue.
         if (v.getId() == R.id.startButton) {
+            registerForBackgroundCall();
             handler.postDelayed(runnable = new Runnable() {
                 @Override
                 public void run() {
                     //Log.d("TAG", "Run after 5 seconds");
                     //Toast.makeText(MainActivity.this, "Run after 20 seconds", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent();
-                    intent.setAction("action.CALL_SERVICE");
-                    LocalBroadcastManager.getInstance(MainActivity.this)
-                            .sendBroadcast(intent);
+                    registerForBackgroundCall();
                     handler.postDelayed(runnable, delayInMillis);
                 }
             }, delayInMillis);
@@ -64,6 +62,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (runnable != null)
                 handler.removeCallbacks(runnable);
         }
+    }
+
+    private void registerForBackgroundCall() {
+        Intent intent = new Intent();
+        intent.setAction("action.CALL_SERVICE");
+        LocalBroadcastManager.getInstance(MainActivity.this)
+                .sendBroadcast(intent);
     }
 
     @Override

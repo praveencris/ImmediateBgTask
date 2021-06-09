@@ -3,6 +3,7 @@ package com.example.jsonsample;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.media.MediaPlayer;
 import android.util.Log;
 
 import com.android.volley.Request;
@@ -26,6 +27,8 @@ public class AlarmReceiver extends BroadcastReceiver {
                     public void onResponse(String response) {
                         // Display the first 500 characters of the response string.
                         Log.d("TAG", "Response is: " + response.substring(0, 100));
+                        MediaPlayer mediaPlayer = MediaPlayer.create(context, R.raw.pristine_609);
+                        mediaPlayer.start(); // no need to call prepare(); create() does that for you
                     }
                 }, new Response.ErrorListener() {
             @Override
