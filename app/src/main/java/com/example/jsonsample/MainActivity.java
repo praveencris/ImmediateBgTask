@@ -38,9 +38,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         stopServiceButton.setOnClickListener(this);
 
         alarmReceiver = new AlarmReceiver();
-        LocalBroadcastManager.getInstance(MainActivity.this)
-                .registerReceiver(alarmReceiver,
-                        new IntentFilter("action.CALL_SERVICE"));
     }
 
     @Override
@@ -61,6 +58,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else {
             if (runnable != null)
                 handler.removeCallbacks(runnable);
+            LocalBroadcastManager.getInstance(MainActivity.this)
+                    .unregisterReceiver(alarmReceiver);
         }
     }
 
@@ -76,12 +75,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onPause();
         if (runnable != null)
             handler.removeCallbacks(runnable);
+        LocalBroadcastManager.getInstance(MainActivity.this)
+                .unregisterReceiver(alarmReceiver);
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onResume() {
+        super.onResume();
         LocalBroadcastManager.getInstance(MainActivity.this)
-                .unregisterReceiver(alarmReceiver);
+                .registerReceiver(alarmReceiver,
+                        new IntentFilter("action.CALL_SERVICE"));
     }
 }
