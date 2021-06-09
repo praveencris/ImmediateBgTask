@@ -19,7 +19,6 @@ public class AlarmReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         RequestQueue queue = Volley.newRequestQueue(context);
-        //Start AlarmManager for every 20 sec
         // Request a string response from the provided URL.
         StringRequest stringRequest = new StringRequest(Request.Method.GET, URL,
                 new Response.Listener<String>() {
@@ -36,7 +35,7 @@ public class AlarmReceiver extends BroadcastReceiver {
                 Log.d("TAG", "That didn't work!");
             }
         });
-// Add the request to the RequestQueue.
+        // Add the request to the RequestQueue.
         queue.add(stringRequest);
     }
 }

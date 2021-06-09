@@ -8,7 +8,6 @@ import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.os.HandlerCompat;
@@ -16,57 +15,40 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-
     private EditText numberEditText;
     private Button startServiceButton;
     private Button stopServiceButton;
 
-    ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    Handler mainThreadHandler = HandlerCompat.createAsync(Looper.getMainLooper());
-
-    private final long delayInMillis = 20000;
     private AlarmReceiver alarmReceiver;
+    private Intent networkServiceIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         numberEditText = findViewById(R.id.numberEt);
         startServiceButton = findViewById(R.id.startButton);
         stopServiceButton = findViewById(R.id.stopButton);
-
         startServiceButton.setOnClickListener(this);
         stopServiceButton.setOnClickListener(this);
 
-        alarmReceiver = new AlarmReceiver();
+        networkServiceIntent = new Intent(this, NetworkService.class);
+
     }
 
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.startButton) {
-            executor.scheduleWithFixedDelay(new Runnable() {
-                @Override
-                public void run() {
-                    registerForBackgroundCall();
-                    //Optional if want to display something on main thread
-                    mainThreadHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(MainActivity.this, "Timer triggered!!", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
-            }, 0, delayInMillis, TimeUnit.MILLISECONDS);
+            networkServiceIntent.putExtra("EXTRA_FLAG",1);
         } else {
-            executor.shutdown();
+            networkServiceIntent.putExtra("EXTRA_FLAG",2);
         }
+        startService(networkServiceIntent);
     }
 
-    private void registerForBackgroundCall() {
+   /* private void registerForBackgroundCall() {
         Intent intent = new Intent();
         intent.setAction("action.CALL_SERVICE");
         LocalBroadcastManager.getInstance(MainActivity.this)
@@ -86,5 +68,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         LocalBroadcastManager.getInstance(MainActivity.this)
                 .registerReceiver(alarmReceiver,
                         new IntentFilter("action.CALL_SERVICE"));
-    }
+    }*/
 }
